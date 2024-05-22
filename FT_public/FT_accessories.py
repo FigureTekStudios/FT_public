@@ -216,7 +216,7 @@ def import_assets(asset_path):
 def import_asset_from_folder(asset_folder):
     import_assets(asset_folder)
 
-def select_asset_folders():
+def load_accessory_folders():
     project_folder_is_set_correctly = check_project_folder()
     #Only proceed if the project is set to a FT Character folder.
     if project_folder_is_set_correctly:
