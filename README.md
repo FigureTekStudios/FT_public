@@ -1,6 +1,6 @@
 
 ##  **Installing FT_public**
-Drag the Figure-Tek folder(at the same level as this readme.md) to  your `Maya/scripts` folder
+Drag the Figure-Tek folder (at the same level as this readme.md) to  your `Maya/scripts` folder
 
 ##  Reset animation controls
 To select all animation controls and zero them to the bind pose, run this in a Python script editor:
