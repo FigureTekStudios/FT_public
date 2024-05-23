@@ -2,7 +2,9 @@
 ##  **Installing FT_public**
 Drag the Figure-Tek folder (at the same level as this readme.md) to  your `Maya/scripts` folder
 
-##  Reset animation controls
+
+## Animation commands
+###  Reset animation controls
 To select all animation controls and zero them to the bind pose, run this in a Python script editor:
 
 ```python
@@ -11,9 +13,11 @@ FT_utils.select_all()
 FT_utils.set_bindpose()
 ```
 
-## Steps to Import Accessories
+## Steps to Import Figure-Tek Accessories
 
-1. **Download and Unzip**: Download and unzip the accessory folder (e.g., `Handwraps_GJ5-DD3-DCH2`).
+1. **Download and Unzip**: Download your asset from Gumroad. Ill use https://figuretek.gumroad.com/l/GJ5-DD3-DCH2 as an example asset. Once you have it downloaded 
+
+
 2. **Create Directory**: Create a location on your drive to house the accessory folder and any other accessories you might want to purchase.
 3. **Install FT_public**: Ensure you have the latest Figure-Tek tools package (`FT_public`) installed in your Maya scripts directory.
 4. **Run Script**: In a Maya Python script editor, run the above commands to load the accessory folders.
