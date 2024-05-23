@@ -14,30 +14,23 @@ FT_utils.set_bindpose()
 ```
 
 ## Steps to Import Figure-Tek Accessories
-1. **Install FT_public**: Ensure you have the latest Figure-Tek tools package (`FT_public`) installed in your Maya scripts directory.
-2.  **Create an accessories directory**: Create a folder named accessories or FT_accessories on your documents folder or somewhere on your drive. 
-3. **Download and Unzip**: Download your asset from Gumroad. Ill use https://figuretek.gumroad.com/l/GJ5-DD3-DCH2 as an example asset. Unzip it and youll end up with what  an
-      accessory folder named Handwraps_GJ5-DD3-DCH2. The first part of the name is the asset name, and the second is the FT_ID which every asset has.
+1. **Ensure you have the latest Figure-Tek tools package** `FT_public` installed in your Maya scripts directory.
 
+2.  **Create an accessories directory**: Create a folder named `accessories_library` in your documents folder or somewhere on your drive. 
 
+3. **Download and Unzip**: Download your asset from Gumroad. Ill use `https://figuretek.gumroad.com/l/GJ5-DD3-DCH2` as an example asset. Unzip it and youll end up with an
+      accessory folder named `Handwraps_GJ5-DD3-DCH2`. The first part of the folder is the asset name, and the second is the FT_ID which every asset has.
 
-4. **Run Script**: In a Maya Python script editor, run the above commands to load the accessory folders.
+4. **Open up your Figure-Tek charachter rig in Maya**: Ill use `FT_human_female_PG4-HJ8-GHF5`, the flagship chararachter as an example. Her rig file is located wherever you stored the asset               then  `..\FT_human_female_PG4-HJ8-GHF5\_rig\PG4.mb`
+      
+5. **Make sure you set your project to your characters folder** in this example the charachers folder is named `FT_human_female_PG4-HJ8-GHF5`. This is important so the script will know where to           copy texture maps to your characters sourceimages folder.
 
-
-get FT_public recopied to your maya scripts folder
- open the rig (PG4_REF.ma)  set your project if you havent already.
-
-run this in a maya python script editor:
-
-from FT_public import FT_accessories
-FT_accessories.load_accessory_folders() (edited)
-
-
-Import accessories with the following commands:
-```
-from FT_public import FT_accessories
-FT_accessories.load_accessory_folders()
-```
+4. **Run Script**: In a Maya Python script editor, run the following commands:
+      ```
+      from FT_public import FT_accessories
+      FT_accessories.load_accessory_folders()
+      ```
+5. **Select the asset folder**: Navigate to your `accessories_library` folder select the accessory folder, in our example `Handwraps_GJ5-DD3-DCH2`
 
   thatll load all the outfit pieces up for you, skin them, and hook up the textures. itll also copy the textrure from your asset library over to the character folder so the character is all still   self containted. 
 
