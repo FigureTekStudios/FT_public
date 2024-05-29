@@ -28,12 +28,15 @@ def check_project_folder():
 def check_accessory_folder(accessory_folder_path):
     folder_name = os.path.basename(accessory_folder_path)
     print(f"Accessory folder: {folder_name}")  # Debug print
-    pattern = r".*_[A-Za-z0-9\-]+$"
+
+    # The pattern ensures the folder name ends with an underscore followed by a 10-character alphanumeric string or hyphens
+    pattern = r"[A-Za-z]+_[A-Za-z0-9]+-[A-Za-z0-9]+-[A-Za-z0-9]+"
+    
     if re.match(pattern, folder_name):
         print(f"Accessory folder '{folder_name}' is set correctly.")
         return True
     else:
-        print(f"Incorrect accessory folder '{folder_name}'. Expected format: <name>_<FT_ID> (FT_ID should be a 10-character alphanumeric string or contain hyphens)")
+        print(f"Incorrect accessory folder '{folder_name}'. Expected format: <name>_<FT_ID> (FT_ID should be a 10-character alphanumeric string or containing hyphens)")
         return False
         
 def load_json_data(json_file_path):
@@ -115,7 +118,7 @@ def import_material_networks(material_folder):
             material_file_path = os.path.join(material_folder, material_file)
             cmds.file(material_file_path, i=True, type="mayaAscii", options="v=0", loadReferenceDepth="all")
 
-def setup_materials(materials_info, obj_materials, textures_subfolder):
+def setup_materials(materials_info, obj_materials,textures_folder, textures_subfolder):
     shading_groups = {}
     for obj, materials in obj_materials.items():
         for material in materials:
@@ -130,10 +133,11 @@ def setup_materials(materials_info, obj_materials, textures_subfolder):
 
             file_nodes = materials_info.get(material, [])
             for file_node in file_nodes:
-                original_texture_path = cmds.getAttr(f"{file_node}.fileTextureName")
                 new_texture_name = cmds.getAttr(f"{file_node}.newTextureName")
+                original_texture_path = os.path.join(textures_folder, new_texture_name)
                 dest_texture_path = os.path.join(textures_subfolder, new_texture_name)
-                
+                print 
+
                 if not os.path.exists(dest_texture_path):  # Only copy if not already copied
                     print("copy texture into the charachter sourceimages folder:", dest_texture_path)
                     shutil.copy(original_texture_path, dest_texture_path)
@@ -156,13 +160,14 @@ def import_rig_weights(obj, weights_folder):
 
 def import_assets(asset_path):
     asset_name, FT_ID = os.path.basename(asset_path).split("_")
+    print (asset_name)
     asset_folder = asset_path
     if not os.path.exists(asset_folder):
         cmds.error(f"Asset folder {asset_folder} does not exist.")
     
     # Remove existing assets with the same FT_ID
     remove_existing_assets(FT_ID)
-
+    print (asset_folder)
     objs_folder = os.path.join(asset_folder, "objs")
     weights_folder = os.path.join(asset_folder, "weights")
     material_folder = os.path.join(asset_folder, "material_networks")
@@ -212,7 +217,7 @@ def import_assets(asset_path):
             import_rig_weights(imported_obj, weights_folder)
     
     # Setup materials and apply them to imported OBJs
-    setup_materials(materials_info, obj_materials, textures_subfolder)
+    setup_materials(materials_info, obj_materials, textures_folder, textures_subfolder)
 
 def import_asset_from_folder(asset_folder):
     import_assets(asset_folder)
@@ -243,8 +248,9 @@ def load_accessory_folders():
             paths = file_dialog.selectedFiles()
             if not paths:
                 return
-    
+            
             for accessory_folder_path in paths:
+                print (accessory_folder_path)
                 is_accessory_folder =  check_accessory_folder(accessory_folder_path)
                 if is_accessory_folder:
                     import_asset_from_folder(accessory_folder_path)
