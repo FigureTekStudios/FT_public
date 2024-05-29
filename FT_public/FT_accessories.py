@@ -93,6 +93,7 @@ def import_obj(obj_file_path, FT_ID):
     # Import the OBJ file
     imported_objs = cmds.file(obj_file_path, i=True, type="OBJ", rnn=True)
     imported_obj = cmds.ls(imported_objs, assemblies=True)[0]  # Get the top-level transform node
+    cmds.polyNormalPerVertex(imported_obj, ufn=True)
     cmds.polySoftEdge(imported_obj, ch=0)  # Smooth normals
     
     # Ensure the imported object has the correct name
@@ -251,7 +252,7 @@ def load_accessory_folders():
 
 
 
-#select_asset_folders()
+#load_accessory_folders()
 
 
 
