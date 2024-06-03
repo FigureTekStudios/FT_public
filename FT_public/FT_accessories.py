@@ -8,10 +8,8 @@ from PySide2.QtWidgets import QFileDialog, QListView, QTreeView, QAbstractItemVi
 import importlib
 importlib.reload(skn)
 
-
 # Use your FT Accessories directory and sourceimages path
-
-SOURCEIMAGES_DIR = cmds.workspace(query=True, fullName=True) + "/sourceimages/"
+SOURCEIMAGES_DIR = cmds.workspace(query=True, fullName=True) + "/_rig/sourceimages/"
 
 def check_project_folder():
     project_folder = cmds.workspace(query=True, fullName=True)
@@ -22,7 +20,7 @@ def check_project_folder():
         print("Project folder is set correctly.")
         return True
     else:
-        cmds.warning("Incorrect project folder. Expected format: FT_*_{FT_ID} (Set your project to A FIGURE-TEK charachter folder)")
+        cmds.warning("Incorrect project folder. Expected format: FT_*_{FT_ID} (Set your project to A FIGURE-TEK character folder)")
         return False
 
 def check_accessory_folder(accessory_folder_path):
@@ -30,7 +28,7 @@ def check_accessory_folder(accessory_folder_path):
     print(f"Accessory folder: {folder_name}")  # Debug print
 
     # The pattern ensures the folder name ends with an underscore followed by a 10-character alphanumeric string or hyphens
-    pattern = r"[A-Za-z]+_[A-Za-z0-9]+-[A-Za-z0-9]+-[A-Za-z0-9]+"
+    pattern = r"FT_[A-Za-z]+_[A-Za-z0-9]+-[A-Za-z0-9]+-[A-Za-z0-9]+"
     
     if re.match(pattern, folder_name):
         print(f"Accessory folder '{folder_name}' is set correctly.")
@@ -118,7 +116,7 @@ def import_material_networks(material_folder):
             material_file_path = os.path.join(material_folder, material_file)
             cmds.file(material_file_path, i=True, type="mayaAscii", options="v=0", loadReferenceDepth="all")
 
-def setup_materials(materials_info, obj_materials,textures_folder, textures_subfolder):
+def setup_materials(materials_info, obj_materials, textures_folder, textures_subfolder):
     shading_groups = {}
     for obj, materials in obj_materials.items():
         for material in materials:
@@ -136,38 +134,36 @@ def setup_materials(materials_info, obj_materials,textures_folder, textures_subf
                 new_texture_name = cmds.getAttr(f"{file_node}.newTextureName")
                 original_texture_path = os.path.join(textures_folder, new_texture_name)
                 dest_texture_path = os.path.join(textures_subfolder, new_texture_name)
-                print 
 
                 if not os.path.exists(dest_texture_path):  # Only copy if not already copied
-                    print("copy texture into the charachter sourceimages folder:", dest_texture_path)
+                    print("Copying texture into the character sourceimages folder:", dest_texture_path)
                     shutil.copy(original_texture_path, dest_texture_path)
                   
                 # Update the file node with the new texture path
                 cmds.setAttr(f"{file_node}.fileTextureName", dest_texture_path, type="string")
 
 def import_rig_weights(obj, weights_folder):
-
     export_joints = cmds.ls('out_C0_*_jnt')
 
     weights_subfolder = 'export' if export_joints else ''
     weights_file_path = os.path.join(weights_folder, weights_subfolder, f"{obj}_skin.xml")
 
-    print("Loading weights from", weights_file_path )
+    print("Loading weights from", weights_file_path)
     if os.path.exists(weights_file_path):
         skn.import_skin_weights(obj, weights_file_path)
     else:
         cmds.warning(f"Weight file not found: {weights_file_path}")
 
 def import_assets(asset_path):
-    asset_name, FT_ID = os.path.basename(asset_path).split("_")
-    print (asset_name)
+    _, asset_name, FT_ID = os.path.basename(asset_path).split("_")
+    print(asset_name)
     asset_folder = asset_path
     if not os.path.exists(asset_folder):
         cmds.error(f"Asset folder {asset_folder} does not exist.")
     
     # Remove existing assets with the same FT_ID
     remove_existing_assets(FT_ID)
-    print (asset_folder)
+    print(asset_folder)
     objs_folder = os.path.join(asset_folder, "objs")
     weights_folder = os.path.join(asset_folder, "weights")
     material_folder = os.path.join(asset_folder, "material_networks")
@@ -224,7 +220,7 @@ def import_asset_from_folder(asset_folder):
 
 def load_accessory_folders():
     project_folder_is_set_correctly = check_project_folder()
-    #Only proceed if the project is set to a FT Character folder.
+    # Only proceed if the project is set to a FT Character folder.
     if project_folder_is_set_correctly:
         
         app = QApplication.instance()
@@ -250,15 +246,11 @@ def load_accessory_folders():
                 return
             
             for accessory_folder_path in paths:
-                print (accessory_folder_path)
-                is_accessory_folder =  check_accessory_folder(accessory_folder_path)
+                print(accessory_folder_path)
+                is_accessory_folder = check_accessory_folder(accessory_folder_path)
                 if is_accessory_folder:
                     import_asset_from_folder(accessory_folder_path)
                     print(f"Imported: {accessory_folder_path}")
 
 
-
-#load_accessory_folders()
-
-
-
+# load_accessory_folders()
