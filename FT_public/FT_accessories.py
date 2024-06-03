@@ -9,7 +9,7 @@ import importlib
 importlib.reload(skn)
 
 # Use your FT Accessories directory and sourceimages path
-SOURCEIMAGES_DIR = cmds.workspace(query=True, fullName=True) + "/_rig/sourceimages/"
+SOURCEIMAGES_DIR = cmds.workspace(query=True, fullName=True) + "/_rig"
 
 def check_project_folder():
     project_folder = cmds.workspace(query=True, fullName=True)
@@ -196,9 +196,9 @@ def import_assets(asset_path):
     import_material_networks(material_folder)
 
     # Create a subfolder for textures in the sourceimages directory
-    textures_subfolder = os.path.join(SOURCEIMAGES_DIR, f"accessory_maps/{asset_name}_{FT_ID}")
-    if not os.path.exists(textures_subfolder):
-        os.makedirs(textures_subfolder)
+    #textures_subfolder = os.path.join(SOURCEIMAGES_DIR, f"accessory_maps/{asset_name}_{FT_ID}")
+    #if not os.path.exists(textures_subfolder):
+    #    os.makedirs(textures_subfolder)
 
     # Import OBJ files
     all_imported_objs = []
@@ -213,7 +213,7 @@ def import_assets(asset_path):
             import_rig_weights(imported_obj, weights_folder)
     
     # Setup materials and apply them to imported OBJs
-    setup_materials(materials_info, obj_materials, textures_folder, textures_subfolder)
+    setup_materials(materials_info, obj_materials, textures_folder, SOURCEIMAGES_DIR)
 
 def import_asset_from_folder(asset_folder):
     import_assets(asset_folder)
