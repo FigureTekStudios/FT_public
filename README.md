@@ -1,6 +1,7 @@
 
 ##  **Installing FT_public**
 Press the green code button and download the zipped up code. Unzip. Within the new folder named Ft_public-main youll find FT_public. Drag the Figure-Tek folder (at the same directory level as this readme.md) to  your `Documents/Maya/scripts` folder
+![image](https://github.com/FigureTekStudios/FT_public/assets/9369366/d34fd0f7-5b58-4b3a-9ea7-d71f2844af6b)
 
 
 ## Animation commands
