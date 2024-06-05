@@ -18,7 +18,7 @@ FT_utils.set_bindpose()
 ## Steps to Import Figure-Tek Accessories
 1. **Ensure you have the latest Figure-Tek tools package** `FT_public` installed in your Maya scripts directory.
 
-2.  **Create an accessories directory**: Create a folder named `accessories_library` in your documents folder or somewhere on your drive. 
+2.  **Create an accessories directory**: Create a folder named `accessories` in your documents folder or somewhere on your drive. 
 
 3. **Download and Unzip**: Download your asset from Gumroad. Ill use the Handwraps asset, https://figuretek.gumroad.com/l/GJ5-DD3-DCH2 as an example asset. Unzip it and you'll end up with an accessory folder named FT_Handwraps_GJ5-DD3-DCH2.
 
