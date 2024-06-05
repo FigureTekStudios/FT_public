@@ -20,7 +20,7 @@ FT_utils.set_bindpose()
 
 2.  **Create an accessories directory**: Create a folder named `accessories_library` in your documents folder or somewhere on your drive. 
 
-3. **Download and Unzip**: Download your asset from Gumroad. Ill use the Handwraps asset, https://figuretek.gumroad.com/l/GJ5-DD3-DCH2 as an example asset. Unzip it and you'll end up with an accessory folder named FT_Handwraps_GJ5-DD3-DCH2. The first part of the folder is the asset name, and the second is the FT_ID which every asset has.
+3. **Download and Unzip**: Download your asset from Gumroad. Ill use the Handwraps asset, https://figuretek.gumroad.com/l/GJ5-DD3-DCH2 as an example asset. Unzip it and you'll end up with an accessory folder named FT_Handwraps_GJ5-DD3-DCH2.
 
 4. **Open up your Figure-Tek charachter rig in Maya**: Ill use FT_human_female_PG4-HJ8-GHF5, the flagship character as an example. Her rig file is located wherever you stored the asset then ..\FT_HumanFemale_PG4-HJ8-GHF5\_rig\PG4.mb
       
