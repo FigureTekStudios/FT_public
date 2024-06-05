@@ -1,6 +1,6 @@
 
 ##  **Installing FT_public**
-Drag the Figure-Tek folder (at the same level as this readme.md) to  your `Maya/scripts` folder
+Drag the Figure-Tek folder (at the same level as this readme.md) to  your `Documents/Maya/scripts` folder
 
 
 ## Animation commands
