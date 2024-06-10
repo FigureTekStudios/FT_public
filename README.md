@@ -24,7 +24,7 @@ FT_utils.set_bindpose()
 
 4. **Make sure you set your project to your characters folder** I'll use FT_human_female_PG4-HJ8-GHF5', the flagship character as an example. The charachers folder is named `FT_human_female_PG4-HJ8-GHF5`. Setting the project is important so the script will know where to copy texture maps to your characters _rig directory. 
 
-5. **Open up your Figure-Tek charachter rig in Maya**: Her rig file is located wherever you stored the asset then ..\FT_HumanFemale_PG4-HJ8-GHF5\_rig\PG4.mb
+5. **Open up your Figure-Tek charachter rig scene**: Her rig file is located wherever you stored the asset then ..\FT_HumanFemale_PG4-HJ8-GHF5\_rig\PG4.mb
       
 4. **Run Script**: In a Maya Python script editor, run the following commands:
       ```
