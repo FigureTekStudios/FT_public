@@ -35,5 +35,5 @@ FT_utils.set_bindpose()
 FT_Handwraps_GJ5-DD3-DCH2 and press choose.   That'll load all the outfit pieces up for you, skin them, and hook up the textures. It'll also copy the texture from your asset library over to the character folder so the character project is all still self contained. save the PG4 animation scene.
 6. Finally, open the PG4-Export rig file and load the accessories onto this asset as well and save pG4-export.mb. 
 
-Thats it. YOu can start a new scene and reference in the PG4.mb file and begin animating.
+Thats it. Start a new scene and reference in the PG4.mb file to begin animating.
 
