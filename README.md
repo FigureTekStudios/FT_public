@@ -31,6 +31,6 @@ FT_utils.set_bindpose()
       from FT_public import FT_accessories
       FT_accessories.load_accessory_folders()
       ```
-5. **Select the asset folder**: Navigate to your accessories_library folder select the accessory folder, in our example 
+5. **Select the asset folder**: Navigate to your `accessories` folder select the accessory folder, in our example 
 FT_Handwraps_GJ5-DD3-DCH2 and press choose.   That'll load all the outfit pieces up for you, skin them, and hook up the textures. It'll also copy the texture from your asset library over to the character folder so the character project is all still self contained. 
 
