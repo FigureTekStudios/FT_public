@@ -22,9 +22,9 @@ FT_utils.set_bindpose()
 
 3. **Download and Unzip**: Download your asset from Gumroad. Ill use the Handwraps asset, https://figuretek.gumroad.com/l/GJ5-DD3-DCH2 as an example asset. Unzip it and you'll end up with an accessory folder named FT_Handwraps_GJ5-DD3-DCH2.
 
-4. **Make sure you set your project to your characters folder** in this example the charachers folder is named `FT_human_female_PG4-HJ8-GHF5`. This is important so the script will know where to           copy texture maps to your characters sourceimages folder.
+4. **Make sure you set your project to your characters folder** I'll use FT_human_female_PG4-HJ8-GHF5', the flagship character as an example. The charachers folder is named `FT_human_female_PG4-HJ8-GHF5`. Setting the project is important so the script will know where to copy texture maps to your characters _rig directory. 
 
-5. **Open up your Figure-Tek charachter rig in Maya**: Ill use FT_human_female_PG4-HJ8-GHF5, the flagship character as an example. Her rig file is located wherever you stored the asset then ..\FT_HumanFemale_PG4-HJ8-GHF5\_rig\PG4.mb
+5. **Open up your Figure-Tek charachter rig in Maya**: Her rig file is located wherever you stored the asset then ..\FT_HumanFemale_PG4-HJ8-GHF5\_rig\PG4.mb
       
 4. **Run Script**: In a Maya Python script editor, run the following commands:
       ```
