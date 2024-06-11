@@ -16,7 +16,7 @@ FT_utils.set_bindpose()
 ```
 
 ## Steps to Import Figure-Tek Accessories
-1. **Ensure you have the latest Figure-Tek tools package** `FT_public` installed in your Maya scripts directory.
+1. **Ensure you have the latest Figure-Tek tools package** `FT_public` installed in your Maya scripts directory. https://github.com/FigureTekStudios/FT_public
 
 2.  **Create an accessories directory**: Create a folder named `accessories` in your documents folder or somewhere on your drive. 
 
