@@ -243,11 +243,16 @@ def matchBakeLocators(parent=None, bakeOnOnes=False, constrainSource=False):
         mc.connectAttr('.'.join((obj,'message')), '.'.join((locator,'ml_bakeSource')))
         mc.addAttr(locator, longName='ml_bakeSourceName', dataType='string')
         mc.setAttr('.'.join((locator,'ml_bakeSourceName')), name, type='string')
-
+        print (obj)
         #if parent:
         #    locator = mc.parent(locator, parent)[0]
-        parent = mc.listRelatives(obj, p = True)[0]
-        locator = mc.parent(locator, parent)[0]
+
+        parent = mc.listRelatives(obj, p=True)
+        parent = parent[0] if parent else None
+
+        if parent:
+            locator = mc.parent(locator, parent)[0]
+        
         locs.append(locator)
 
         #should look through all trans and rot
