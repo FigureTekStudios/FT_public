@@ -263,7 +263,7 @@ def generate_fbx_animation(reference_node,
     cmds.select(global_joint) 
     #fbx_export_path = os.path.join(base_fbx_destination_folder,"fbx_animations", f"{namespace}_{scene_name}.fbx")
 
-    fbx_export_path = base_fbx_destination_folder + f"/fbx_animations/{namespace}_{scene_name}.fbx"
+    fbx_export_path = base_fbx_destination_folder + f"/{namespace}_fbx_animations/{namespace}_{scene_name}.fbx"
     
     print (fbx_export_path)
     if not os.path.exists(os.path.dirname(fbx_export_path)):
@@ -357,7 +357,7 @@ def generate_fbx_model(base_fbx_destination_folder=None, model_container_wo_name
     
     #fbx_export_path =  os.path.join(base_fbx_destination_folder, f"fbx_model/{namespace}_base.fbx")
 
-    fbx_export_path = base_fbx_destination_folder + f"/fbx_model/{namespace}_base.fbx"
+    fbx_export_path = base_fbx_destination_folder + f"/{namespace}_fbx_model/{namespace}_base.fbx"
     if not os.path.exists(os.path.dirname(fbx_export_path)):
 
         # Create the folder
