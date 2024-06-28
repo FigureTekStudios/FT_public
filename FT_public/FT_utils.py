@@ -8,21 +8,31 @@
 
 import maya.cmds as cmds
 
-def select_all():
-    controllers_grp = (cmds.ls("rig*_controllers_grp") + cmds.ls("*:rig*_controllers_grp"))
+def select_all(namespace="*"):
     
-    cmds.select(controllers_grp)
+    rig_catch = cmds.ls( f"{namespace}:rig_*", type = "transform")
+    if namespace=="*":
+        rig_catch += cmds.ls( f"rig_*", type = "transform")
+        
+    rig_names = []
+    for rig_transform in rig_catch:
+        if cmds.attributeQuery("is_rig", node=rig_transform, exists=True):
+            rig_names.append(rig_transform)
     
-    faceSliders_grp = (cmds.ls("rig_*_faceSliders_grp") + cmds.ls("*:rig_*_faceSliders_grp"))
-    if faceSliders_grp:
-    	cmds.select(faceSliders_grp[0],add=True)
-    sec_faceSliders_grp = (cmds.ls("rig_*_faceSecondaryCtls_grp") + cmds.ls("*:rig_*_faceSecondaryCtls_grp"))
-    if sec_faceSliders_grp:
-    	cmds.select(sec_faceSliders_grp[0],add=True)
-    
-    volSys_controllers = (cmds.ls("Def*_ctl") + cmds.ls("*:Def*_ctl"))
-    cmds.select(volSys_controllers,add=True)
-
+    cmds.select(cl = True)
+    for rig_name in rig_names:
+        
+        ################################################
+        controllers_grp = cmds.ls(f"{rig_name}_controllers_grp") + cmds.ls(f"{namespace}:{rig_name}_controllers_grp")
+        
+        cmds.select(controllers_grp,add=True)
+        
+        faceSliders_grp = cmds.ls(f"{rig_name}_faceSliders_grp") + cmds.ls(f"{namespace}:{rig_name}_faceSliders_grp")
+        if faceSliders_grp:
+            cmds.select(faceSliders_grp[0],add=True)
+        sec_faceSliders_grp = cmds.ls(f"{rig_name}_faceSecondaryCtls_grp") + cmds.ls(f"{namespace}:{rig_name}_faceSecondaryCtls_grp")
+        if sec_faceSliders_grp:
+            cmds.select(sec_faceSliders_grp[0],add=True)
 
 def set_bindpose():
     sel = cmds.ls(sl = True)
