@@ -107,7 +107,8 @@ def is_figure_tek_project(path):
 
 def generate_fbx_animations(base_fbx_destination_folder = None, 
                             model_container_wo_namespace="export_grp", 
-                            bypass_selection_export_all=False):
+                            bypass_selection_export_all=False,
+                            Lo_Mid_Hi = "Hi"):
     """
     runs in a scene with any number of rigs in it. cmds.select any <> reference nodes you want exported,
     if nothing or nothing in the selection in the  you want to export or itll generate one for every available rig
@@ -144,7 +145,7 @@ def generate_fbx_animations(base_fbx_destination_folder = None,
 
             #if is_figure_tek_project(file_path):
                 #print(f"The file {file_path} is inside a Figure-Tek project folder.")
-
+            '''
             if "_export" not in rig_file_path:  # We're dealing with an anim rig
                 # Construct the path to the export rig
                 name, extension = os.path.basename(rig_file_path).split(".")
@@ -154,12 +155,12 @@ def generate_fbx_animations(base_fbx_destination_folder = None,
                     # Swap in the animation.
                     cmds.file(export_rig, loadReference=reference_node)
                     print(f"Replaced with export rig: {export_rig}")
-                    
+            '''
             if base_fbx_destination_folder == None:
                 base_fbx_destination_folder = os.path.dirname(cmds.file(q=1, loc=1))
 
 
-            generate_fbx_animation(reference_node, base_fbx_destination_folder, model_container_wo_namespace=model_container_wo_namespace)
+            generate_fbx_animation(reference_node, base_fbx_destination_folder, model_container_wo_namespace=model_container_wo_namespace, Lo_Mid_Hi = "Lo")
      
 
             #else:
@@ -168,7 +169,8 @@ def generate_fbx_animations(base_fbx_destination_folder = None,
 def generate_fbx_animation(reference_node, 
                             base_fbx_destination_folder, 
                             model_container_wo_namespace="export_grp", 
-                            delete_model_containers = True):
+                            delete_model_containers = True,
+                             Lo_Mid_Hi = "Hi"):
     '''
     imports the reference, bakes all joints, deletes everything but the baked skeleton, creates a folder and exports an fbx file.
     '''
@@ -252,8 +254,6 @@ def generate_fbx_animation(reference_node,
     
     ml_worldBake.fromLocators(bakeOnOnes=True)
     #process animCurves?
-     
-     
 
     scene_name, _ = os.path.basename(cmds.file(q=1, loc=1)).split(".")
     # Get the parent directory
@@ -263,13 +263,17 @@ def generate_fbx_animation(reference_node,
     cmds.select(global_joint) 
     #fbx_export_path = os.path.join(base_fbx_destination_folder,"fbx_animations", f"{namespace}_{scene_name}.fbx")
 
-    fbx_export_path = base_fbx_destination_folder + f"/{namespace}_fbx_animations/{namespace}_{scene_name}.fbx"
+    fbx_export_path = base_fbx_destination_folder + f"/{namespace}_fbx_animations/{Lo_Mid_Hi}/{namespace}_{scene_name}.fbx"
     
     print (fbx_export_path)
     if not os.path.exists(os.path.dirname(fbx_export_path)):
         # Create the folder
         os.makedirs(os.path.dirname(fbx_export_path))
-    
+    print ("fbx_export_path=", fbx_export_path)
+    print ("""cmds.FBXExportBakeComplexAnimation("-v", "true")""")
+    # Export the fbx file
+
+    print ("""cmds.FBXExport("-file", fbx_export_path, "-s")""")
     # Include animations
     cmds.FBXExportBakeComplexAnimation("-v", "true")
     # Export the fbx file
@@ -277,7 +281,7 @@ def generate_fbx_animation(reference_node,
     cmds.FBXExport("-file", fbx_export_path, "-s")
 
 
-def generate_fbx_model(base_fbx_destination_folder=None, model_container_wo_namespace="export_grp"):
+def generate_fbx_model(base_fbx_destination_folder=None, model_container_wo_namespace="export_grp", Lo_Mid_Hi = "Hi"):
     
     '''
     This function should be run in the rig scene with a single character, once its rig is complete. 
@@ -351,18 +355,29 @@ def generate_fbx_model(base_fbx_destination_folder=None, model_container_wo_name
     if base_fbx_destination_folder == None:
         base_fbx_destination_folder =os.path.dirname(rig_file_path)
 
-    cmds.select(model_container, global_joint )
+
     #cmds.loadPlugin("fbxmaya", qt=True)
     
     
     #fbx_export_path =  os.path.join(base_fbx_destination_folder, f"fbx_model/{namespace}_base.fbx")
 
-    fbx_export_path = base_fbx_destination_folder + f"/{namespace}_fbx_model/{namespace}_base.fbx"
+    fbx_export_path = base_fbx_destination_folder + f"/{namespace}_fbx_model/{Lo_Mid_Hi}/{namespace}_base.fbx"
     if not os.path.exists(os.path.dirname(fbx_export_path)):
 
         # Create the folder
         os.makedirs(os.path.dirname(fbx_export_path))
-
+    # delete all but the needed tier
+    for tier in ["Lo", "Mid", "Hi"]: 
+        if cmds.objExists(f'{namespace}:{tier}'):
+            cmds.showHidden(f'{namespace}:{tier}')
+            if tier != Lo_Mid_Hi:
+                cmds.delete(f'{namespace}:{tier}') 
+    if Lo_Mid_Hi == "Lo":
+        
+        cmds.select(cmds.ls(f"{namespace}:*Main_*_*_jnt"))
+        cmds.select(f"{namespace}:SubmentalSldMain_C0_0_jnt", d=True)
+        cmds.delete(cmds.ls(sl=True))
+    cmds.select(model_container, global_joint )
     # Include animations
     cmds.FBXExportBakeComplexAnimation("-v", "false")
     # Export the fbx file
@@ -370,8 +385,43 @@ def generate_fbx_model(base_fbx_destination_folder=None, model_container_wo_name
     cmds.FBXExport("-file", fbx_export_path, "-s")
 
     val = cmds.confirmDialog( title='Confirm', message='Open the created fbx?', button=['Yes','No'], defaultButton='Yes', cancelButton='No', dismissString='No' )
+    
+    print ("fbx_export_path=", fbx_export_path)
+    print ("""cmds.FBXExportBakeComplexAnimation("-v", "false")""")
+    # Export the fbx file
+
+    print ("""cmds.FBXExport("-file", fbx_export_path, "-s")""")
+
     if val == "Yes":    
 
         cmds.file(fbx_export_path, open=True, force=True)
+    return fbx_export_path
 
- 
+
+
+len(cmds.ls(sl=True))
+
+
+
+'''
+generate_fbx_model(base_fbx_destination_folder=None, model_container_wo_namespace="export_grp", Lo_Mid_Hi = "Lo")
+
+
+cmds.select( "JR3_exportRN")
+generate_fbx_animations(base_fbx_destination_folder = None, 
+                            model_container_wo_namespace="export_grp", 
+                            bypass_selection_export_all=False,
+                            Lo_Mid_Hi = "Lo")
+
+
+D:/Projects/Whack-a-Punk_Project/assets/aperture/rig/animations/aperture_fbx_animations/Lo/aperture_closing.fbx
+D:/Projects/Whack-a-Punk_Project/assets/aperture/rig/animations/aperture_fbx_animations/Lo/aperture_open.fbx
+cmds.select("JR3:export_grp", "JR3:global_C0_0_jnt" )
+fbx_export_path= "D:/Working/dev/git/_figures/variants/FT_ZombieFemale_JR3-AJ5-KEA2/_rig/JR3_fbx_model/Lo/JR3_base.fbx"
+cmds.FBXExportBakeComplexAnimation("-v", "false")
+cmds.FBXExport("-file", fbx_export_path, "-s")
+
+
+generate_fbx_animations(Lo_Mid_Hi = "Lo")
+
+'''
