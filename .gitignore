@@ -12,3 +12,4 @@ __pycache__/
 # Ignore Python compiled bytecode files
 *.pyc
 
+/FT_public/__pycache__
