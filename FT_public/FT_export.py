@@ -1,4 +1,5 @@
 import maya.cmds as cmds
+import maya.mel as mel
 import FT_public.FT_bake as bake
 import FT_public.ml_worldBake as ml_worldBake
 import os
@@ -6,6 +7,35 @@ import os
 #import importlib 
 #importlib.reload(ml_worldBake)
 #importlib.reload(bake)
+
+import maya.cmds as cmds
+
+def select_geo_in_group(group_name):
+    if not cmds.objExists(group_name):
+        cmds.warning(f"Group '{group_name}' does not exist.")
+        return
+
+    # Get all descendants of the group
+    descendants = cmds.listRelatives(group_name, allDescendents=True, fullPath=True)
+    
+    if not descendants:
+        cmds.warning(f"No descendants found in group '{group_name}'.")
+        return
+
+    # Filter only geometry (mesh shapes)
+    geo = cmds.ls(descendants, type="mesh")
+    
+    if not geo:
+        cmds.warning(f"No geometry found in group '{group_name}'.")
+        return
+
+    # Select the transforms of the geometry (parent nodes)
+    transforms = cmds.listRelatives(geo, parent=True, fullPath=True)
+    cmds.select(transforms)
+
+    print(f"Selected geometry in group '{group_name}': {transforms}")
+    return transforms
+
 
 def get_namespace_from_reference(reference_node):
     # Check if the given node is a reference node
@@ -15,9 +45,9 @@ def get_namespace_from_reference(reference_node):
 
     # Get the namespace of the reference node
     namespace = cmds.referenceQuery(reference_node, namespace=True).split(":")[-1]
-    
+
     return namespace
-    
+
 def create_reference(file_path, namespace=None):
     """
     Creates a reference to the specified file in the current Maya scene.
@@ -67,7 +97,7 @@ def decompose_out_joints(out_joints):
 
 def disconnect_incoming_shear(transform_node):
     shear_attrs = ['shearXY', 'shearXZ', 'shearYZ', "shear"]
-    
+
     for attr in shear_attrs:
         full_attr = f"{transform_node}.{attr}"
         
@@ -105,16 +135,18 @@ def is_figure_tek_project(path):
     return False
 '''
 
-def generate_fbx_animations(base_fbx_destination_folder = None, 
-                            model_container_wo_namespace="export_grp", 
-                            bypass_selection_export_all=False,
-                            Lo_Mid_Hi = "Hi"):
+def generate_fbx_animations(animations_fbx_destination_folder = None, 
+                        model_container_wo_namespace="export_grp", 
+                        bypass_selection_export_all=False,
+                        Lo_Mid_Hi = "Hi",
+                        prune_static_anim_keys = True,
+                        delete_these_strings= []):
     """
     runs in a scene with any number of rigs in it. cmds.select any <> reference nodes you want exported,
     if nothing or nothing in the selection in the  you want to export or itll generate one for every available rig
     if destination_folder == None:
         a folder will be created wherever the original rig files are
-    
+
     """
     all_references = []
     user_sel = cmds.ls(sl=True)
@@ -124,10 +156,10 @@ def generate_fbx_animations(base_fbx_destination_folder = None,
             all_references.append(sel)
     if all_references == []:
         cmds.warning("No <> reference nodes were selected, theyre the diamond icons in the outliner, set bypass_selection_export_all = True if you just want all refernces")
-    
+
     if bypass_selection_export_all:
         all_references = cmds.ls(type='reference')
-    
+
     for reference_node in all_references:
         print (reference_node)
         # Skipping special reference nodes
@@ -156,73 +188,82 @@ def generate_fbx_animations(base_fbx_destination_folder = None,
                     cmds.file(export_rig, loadReference=reference_node)
                     print(f"Replaced with export rig: {export_rig}")
             '''
-            if base_fbx_destination_folder == None:
-                base_fbx_destination_folder = os.path.dirname(cmds.file(q=1, loc=1))
+            if animations_fbx_destination_folder == None:
+                animations_fbx_destination_folder = os.path.dirname(cmds.file(q=1, loc=1))
 
 
-            generate_fbx_animation(reference_node, base_fbx_destination_folder, model_container_wo_namespace=model_container_wo_namespace, Lo_Mid_Hi = "Lo")
+            generate_fbx_animation(reference_node, animations_fbx_destination_folder, model_container_wo_namespace=model_container_wo_namespace, Lo_Mid_Hi = "Lo", delete_these_strings=delete_these_strings)
      
 
             #else:
             #    print(f"The file {file_path} is NOT inside a Figure-Tek project folder.")    
 
 def generate_fbx_animation(reference_node, 
-                            base_fbx_destination_folder, 
-                            model_container_wo_namespace="export_grp", 
-                            delete_model_containers = True,
-                             Lo_Mid_Hi = "Hi"):
+                        animations_fbx_destination_folder, 
+                        model_container_wo_namespace="export_grp", 
+                        delete_model_containers = True,
+                         Lo_Mid_Hi = "Hi",
+                         prune_static_anim_keys = True,
+                         delete_these_strings= []):
     '''
     imports the reference, bakes all joints, deletes everything but the baked skeleton, creates a folder and exports an fbx file.
     '''
-    
+
     #current_project_path = cmds.workspace(q=True, rd=True) # -rootDirectory
     #print(current_project_path)
-    
-    #export_rig = current_project_path + "_rig/PG4_export.mb" #should do a list to determine what file needs to be pulled 
 
+    #export_rig = current_project_path + "_rig/PG4_export.mb" #should do a list to determine what file needs to be pulled 
+    #reference_node = "Neil_REFRN"
     namespace = get_namespace_from_reference(reference_node)
+    if cmds.objExists(f"{namespace}:breathe_C0_0_jnt"):
+        mel.eval(f'''bakeResults -simulation true -t "1:59" -sampleBy 1 -oversamplingRate 1 -disableImplicitControl true -preserveOutsideKeys true -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -removeBakedAnimFromLayer false -bakeOnOverrideLayer false -minimizeRotation true -at "sx" -at "sy" -at "sz" {namespace}:breathe_C0_0_jnt;''')
+    #if cmds.objExists(f"{namespace}:spine_C2_0_jnt"):
+    #    mel.eval(f'''bakeResults -simulation true -t "1:59" -sampleBy 1 -oversamplingRate 1 -disableImplicitControl true -preserveOutsideKeys true -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -removeBakedAnimFromLayer false -bakeOnOverrideLayer false -minimizeRotation true -at "sx" -at "sy" -at "sz" {namespace}:spine_C2_0_jnt;''')
+    
     cmds.file(importReference=True, referenceNode=reference_node)
-    
+    delete_these = cmds.ls(delete_these_strings)
+
+    cmds.delete(delete_these)
     #gather joints perhaps - per reference or namespace
-    
+
     #gather joints
     #namespace = "aperature_REF"
     joints = cmds.listRelatives (f"{namespace}:global_C0_0_jnt", ad = True, type = "joint") + cmds.ls(f"{namespace}:global_C0_0_jnt", type = "joint") #the decendents and the root joint
     #cmds.select(joints)
-    
+
     #Set all joints to keyable for later baking
     for joint in joints:
         for attr in ["tx","ty","tz","rx","ry","rz","sx","sy","sz"]:
             cmds.setAttr(joint+"."+attr, k = True)
-    
+
     out_joints = cmds.ls(f"{namespace}:out_C0_*_jnt")
-    
+
     #if matricies need to be decomposed:
     if out_joints:
         decompose_out_joints(out_joints)
     resulting_joints_set = set(joints) - set(out_joints)
-    
+
     # Convert back to a list
     base_joints = list(resulting_joints_set)
-    
+
     print("using ml bake to the main joints")
     cmds.select(base_joints)
     ml_worldBake.matchBakeLocators(parent=None, bakeOnOnes=True, constrainSource=False)
-    
+
     #BAKE!
-    
+
     #import bake
     #smart = True
     #if smart:
     #    print("smart bake is on, calculation this will take several minutes.")
-    
+
     #using a the standard maya bake command -
     print('baking down the out joints')
     if out_joints:
         bake.bake_transform_animation(out_joints, bakeSRT = False)
         print("out bake completed.")
-    
-    
+
+
     matrix_nodes = cmds.ls(type = "mgear_matrixConstraint") + cmds.ls(type = "multMatrix") + cmds.ls( "*:*_rigUParCon")
     print(len(matrix_nodes))
     #matrix_nodes = cmds.ls( "*:*_rigUParCon")
@@ -240,18 +281,18 @@ def generate_fbx_animation(reference_node,
 
     # grabbing everything under jnt_org
     children_of_jnt_org = cmds.listRelatives(cmds.listRelatives(global_joint,p=True), c= True)
-    
+
     cmds.parent(model_container,children_of_jnt_org, w =True)
-    
-    
-    
+
+
+
     rig_nodes = cmds.ls(f"{namespace}:rig_*") #the rig and sets should be returned
     for rig_node in rig_nodes :
         if cmds.objExists(rig_node):
             cmds.delete(rig_node)
 
     cmds.select(cmds.ls( "worldBake_*",type = "transform"))
-    
+
     ml_worldBake.fromLocators(bakeOnOnes=True)
     #process animCurves?
 
@@ -259,13 +300,21 @@ def generate_fbx_animation(reference_node,
     # Get the parent directory
     #character_project_directory = os.path.abspath(os.path.join(export_rig, '..', '..'))
     cmds.delete(model_container)            
-    
-    cmds.select(global_joint) 
-    #fbx_export_path = os.path.join(base_fbx_destination_folder,"fbx_animations", f"{namespace}_{scene_name}.fbx")
 
-    fbx_export_path = base_fbx_destination_folder + f"/{namespace}_fbx_animations/{Lo_Mid_Hi}/{namespace}_{scene_name}.fbx"
+    cmds.select(global_joint) 
+    #fbx_export_path = os.path.join(animations_fbx_destination_folder,"fbx_animations", f"{namespace}_{scene_name}.fbx")
     
-    print (fbx_export_path)
+        
+    # Example usage:
+    # Determine if any given baked channel is "static and delete all but the first and last frame."
+
+    if prune_static_anim_keys:
+        bake.prune_static_keys(global_joint, recursive=True)
+
+                                
+    #fbx_export_path = animations_fbx_destination_folder + f"/{namespace}_fbx_animations/{Lo_Mid_Hi}/{namespace}_{scene_name}.fbx"
+    fbx_export_path = animations_fbx_destination_folder / f"{namespace}_{scene_name}.fbx"
+    print ('fbx_export_path', fbx_export_path)
     if not os.path.exists(os.path.dirname(fbx_export_path)):
         # Create the folder
         os.makedirs(os.path.dirname(fbx_export_path))
@@ -277,26 +326,32 @@ def generate_fbx_animation(reference_node,
     # Include animations
     cmds.FBXExportBakeComplexAnimation("-v", "true")
     # Export the fbx file
-    
+
     cmds.FBXExport("-file", fbx_export_path, "-s")
+    cmds.file(rename=f"{namespace}_{scene_name}.fbx")
 
 
-def generate_fbx_model(base_fbx_destination_folder=None, model_container_wo_namespace="export_grp", Lo_Mid_Hi = "Hi"):
-    
+def generate_fbx_model(base_fbx_destination_folder=None, 
+                        save_fbx_to_rig_directory_too = False,
+                        model_container_wo_namespace="export_grp", 
+                        Lo_Mid_Hi = "Hi", 
+                        remove_unused_influences = False,
+                        delete_these_strings =[]):
+
     '''
     This function should be run in the rig scene with a single character, once its rig is complete. 
     If this is a character file we should be in the export rig scene. Whatever scene this is run from 
     is what will be operated on. Warn the user if this is a character rig and what the consequences may be.
     We will grab the required files based on what we find based on the namespace 
     '''
-    
+
     #current_project_path = cmds.workspace(q=True, rd=True) # -rootDirectory
     #print(current_project_path)
-    
+
     #export_rig = current_project_path + "_rig/PG4_export.mb" #should do a list to determine what file needs to be pulled 
 
     # Example usage
-    
+
     rig_file_path =cmds.file(q=1, loc=1)
     cmds.file(new=True, f = True)
     # generate the namespace
@@ -309,19 +364,27 @@ def generate_fbx_model(base_fbx_destination_folder=None, model_container_wo_name
     reference_node = None
     for ref_node in all_references:
         print(ref_node)
-        if rig_file_path in cmds.referenceQuery(ref_node, filename=True):
-            reference_node = ref_node
-            break
+        try:
+            if rig_file_path in cmds.referenceQuery(ref_node, filename=True):
+                reference_node = ref_node
+                break
+        except: 
+            pass
+    
+    
+    
     #cmds.referenceQuery(reference_node, filename=True)
-
+    print(namespace)
     cmds.file(importReference=True, referenceNode=reference_node)
+    delete_these = cmds.ls(delete_these_strings)
     
+    cmds.delete(delete_these)
     #gather joints perhaps - per reference or namespace
-    
+
     joints = cmds.listRelatives ("*:global_C0_0_jnt", ad = True, type = "joint") + cmds.ls("*:global_C0_0_jnt", type = "joint")
-    
+
     out_joints = cmds.ls(f"{namespace}:out_C0_*_jnt")
-    
+
     #if matricies need to be decomposed:
     if out_joints:    
         decompose_out_joints(out_joints)
@@ -329,10 +392,10 @@ def generate_fbx_model(base_fbx_destination_folder=None, model_container_wo_name
     #get only the base joints
     resulting_joints_set = set(joints) - set(out_joints)
     base_joints = list(resulting_joints_set)
-    
+
     matrix_nodes = cmds.ls(type = "mgear_matrixConstraint") + cmds.ls(type = "multMatrix") + cmds.ls( "*:*_rigUParCon")
     print(len(matrix_nodes))
-    
+
     for matrix_node in matrix_nodes:
         try:
             cmds.delete(matrix_node)
@@ -343,10 +406,10 @@ def generate_fbx_model(base_fbx_destination_folder=None, model_container_wo_name
     model_container = f"{namespace}:{model_container_wo_namespace}"
     global_joint = f"{namespace}:global_C0_0_jnt"
     children_of_jnt_org = cmds.listRelatives(cmds.listRelatives(global_joint,p=True), c= True)
-    
+
     cmds.parent(model_container,children_of_jnt_org, w =True)
 
-    
+
     rig_nodes = cmds.ls(f"{namespace}:rig_*") #the rig and sets should be returned
     for rig_node in rig_nodes:
         if cmds.objExists(rig_node):
@@ -357,11 +420,16 @@ def generate_fbx_model(base_fbx_destination_folder=None, model_container_wo_name
 
 
     #cmds.loadPlugin("fbxmaya", qt=True)
-    
-    
-    #fbx_export_path =  os.path.join(base_fbx_destination_folder, f"fbx_model/{namespace}_base.fbx")
 
-    fbx_export_path = base_fbx_destination_folder + f"/{namespace}_fbx_model/{Lo_Mid_Hi}/{namespace}_base.fbx"
+
+    #fbx_export_path =  os.path.join(base_fbx_destination_folder, f"fbx_model/{namespace}_base.fbx")
+    
+    
+    if remove_unused_influences:
+        select_geo_in_group(f"{namespace}:{model_container_wo_namespace}")
+        mel.eval('''RemoveUnusedInfluences;''')
+    #fbx_export_path = base_fbx_destination_folder + f"/{namespace}_fbx_model/{Lo_Mid_Hi}/{namespace}_base.fbx"
+    fbx_export_path = base_fbx_destination_folder / f"{namespace}_base.fbx"    
     if not os.path.exists(os.path.dirname(fbx_export_path)):
 
         # Create the folder
@@ -377,6 +445,9 @@ def generate_fbx_model(base_fbx_destination_folder=None, model_container_wo_name
         cmds.select(cmds.ls(f"{namespace}:*Main_*_*_jnt"))
         cmds.select(f"{namespace}:SubmentalSldMain_C0_0_jnt", d=True)
         cmds.delete(cmds.ls(sl=True))
+                
+
+    cmds.dagPose(global_joint, bindPose=True, save=True)
     cmds.select(model_container, global_joint )
     # Include animations
     cmds.FBXExportBakeComplexAnimation("-v", "false")
@@ -384,9 +455,24 @@ def generate_fbx_model(base_fbx_destination_folder=None, model_container_wo_name
 
     cmds.FBXExport("-file", fbx_export_path, "-s")
 
-    val = cmds.confirmDialog( title='Confirm', message='Open the created fbx?', button=['Yes','No'], defaultButton='Yes', cancelButton='No', dismissString='No' )
+    #rig_file_path D:/Projects/Style_Project/TheMission_Project/assets/Krill/GruntWorking/Grunt/_rig/Grunt.mb
+
+    if save_fbx_to_rig_directory_too:
+        rig_folder =Path(os.path.dirname(rig_file_path))
+        #fbx_export_path = 
+        print ("rig_folder",rig_folder)
+        if fbx_export_path == Path(rig_folder) / f"{namespace}_base.fbx":
+            print("paths are the same, skipping")    
+            pass
+        else:    
+            cmds.FBXExport("-file", Path(rig_folder) / f"{namespace}_base.fbx" , "-s")
     
-    print ("fbx_export_path=", fbx_export_path)
+    
+    
+    val = cmds.confirmDialog( title='Confirm', message='Open the created fbx?', button=['Yes','No'], defaultButton='Yes', cancelButton='No', dismissString='No' )
+
+
+    print (f"fbx_export_path='{fbx_export_path}'" )
     print ("""cmds.FBXExportBakeComplexAnimation("-v", "false")""")
     # Export the fbx file
 
@@ -395,25 +481,72 @@ def generate_fbx_model(base_fbx_destination_folder=None, model_container_wo_name
     if val == "Yes":    
 
         cmds.file(fbx_export_path, open=True, force=True)
+    
+    print("Operation Complete.")
+    
     return fbx_export_path
 
 
+from pathlib import Path
 
-len(cmds.ls(sl=True))
+fbx_directory = Path("D:/Projects/Style_Project/TheMission_Project/The-Mission/Assets/Characters/Krill/Spitter/fbx")
+fbx_directory = Path("D:/Projects/Style_Project/TheMission_Project/The-Mission/Assets/Characters/Krill/NewLegDesign/fbx")
+#fbx_directory = Path("D:/Projects/Style_Project/TheMission_Project/The-Mission/Assets/Characters/Human/Generic/fbx")
+
+character_name = fbx_directory.parent.name  # This will be "Grunt"
+character_species = fbx_directory.parent.parent.name  # This will be "Krill"
+print(character_name)
 
 
+base_fbx_destination_folder = fbx_directory / "base"
+animations_fbx_destination_folder = fbx_directory / "animations"
 
+
+if character_species == "Human" :
+    delete_these_strings = ["*:toeMetaHydraulic_*_0_jnt", "*:fingerHydraulic_*0_0_jnt", "*:fingerHydraulic_*1_0_jnt", "*:fingerHydraulic_*2_0_jnt", "*:fingerHydraulic_*3_0_jnt", "*:deltoidAim_**_1_jnt", "*:eye_**_eye_jnt", "*:jaw_C0_0_jnt", "*:teethTop_C0_0_jnt", "*:toe_**_0_jnt", "*:AnkleFrontSldMain_**_0_jnt", "*:CraniumSldMain_C0_0_jnt",
+                            "*:breastPlacement_**_0_jnt", "*:SpineC7SldMain_C0_0_jnt", "*:lat_**_0_jnt", "*:buttock_**_0_jnt", "*:prop_**_0_jnt", "*:foot_*_ball1_jnt", "*:gunRevolver_C0_0_jnt"]
+                            
+    #delete_these_strings = ["toeMetaHydraulic_*_0_jnt", "fingerHydraulic_*0_0_jnt","fingerHydraulic_*1_0_jnt", "fingerHydraulic_*2_0_jnt", "fingerHydraulic_*3_0_jnt", "deltoidAim_**_1_jnt", "eye_**_eye_jnt", "jaw_C0_0_jnt", "teethTop_C0_0_jnt", "toe_**_0_jnt", "AnkleFrontSldMain_**_0_jnt", "CraniumSldMain_C0_0_jnt",
+    #                        "breastPlacement_**_0_jnt", "SpineC7SldMain_C0_0_jnt", "lat_**_0_jnt", "buttock_**_0_jnt", "prop_**_0_jnt", "foot_*_ball1_jnt"]                            
+                            
+                            
+
+if character_species == "Krill":
+    delete_these_strings = ["*:leg_*_*Leg01_jnt", "*:leg_*_hipFrontSlider_jnt","*:foot_*_0_jnt"]
+
+cmds.select(cmds.ls(delete_these_strings))
 '''
-generate_fbx_model(base_fbx_destination_folder=None, model_container_wo_namespace="export_grp", Lo_Mid_Hi = "Lo")
 
 
-cmds.select( "JR3_exportRN")
-generate_fbx_animations(base_fbx_destination_folder = None, 
+fbx_export_path=generate_fbx_model(base_fbx_destination_folder = base_fbx_destination_folder,
+                                   save_fbx_to_rig_directory_too = True,
+                                   model_container_wo_namespace="export_grp",
+                                   Lo_Mid_Hi = "Mid",
+                                   remove_unused_influences=True,
+                                   delete_these_strings = delete_these_strings)
+
+cmds.FBXExportBakeComplexAnimation("-v", "false")
+cmds.FBXExport("-file", fbx_export_path, "-s")
+# Result: 'D:/Working/dev/git/_figures/variants/FT_HumanFemale_PG4-HJ8-GHF5_working/PG4_014_shoulderConceptExport_fbx_model/Hi/PG4_014_shoulderConceptExport_base.fbx' # 
+
+cmds.select( "AnglerFishRN")
+cmds.select( "Neil_REFRN")
+
+
+
+base_dir = 
+cmds.select( "AnglerFishRN")
+cmds.select( "Neil_REFRN")
+
+cmds.select( "SeaUrchinRN")
+generate_fbx_animations(animations_fbx_destination_folder = animations_fbx_destination_folder, 
                             model_container_wo_namespace="export_grp", 
                             bypass_selection_export_all=False,
-                            Lo_Mid_Hi = "Lo")
+                            Lo_Mid_Hi = "Mid",
+                            prune_static_anim_keys = True,
+                            delete_these_strings = delete_these_strings)
 
-
+cmds.ls(sl = True)
 D:/Projects/Whack-a-Punk_Project/assets/aperture/rig/animations/aperture_fbx_animations/Lo/aperture_closing.fbx
 D:/Projects/Whack-a-Punk_Project/assets/aperture/rig/animations/aperture_fbx_animations/Lo/aperture_open.fbx
 cmds.select("JR3:export_grp", "JR3:global_C0_0_jnt" )
