@@ -1,4 +1,4 @@
-import maya.cmds as mc
+import maya.cmds as cmds
 import maya.mel as mm
 
 def bake_transform_animation(transforms, sample_by = 1, bakeSRT = True, skipSRT=[],
@@ -8,16 +8,16 @@ def bake_transform_animation(transforms, sample_by = 1, bakeSRT = True, skipSRT=
     Bake transforms down to keyframes
     bakeSrt (bool) fixes the flips after the bake is complete
     """
-    #set_nodes = mc.sets(engine_joints, query=True)
-    start_frame = mc.playbackOptions(query=True, minTime=True)
-    end_frame = mc.playbackOptions(query=True, maxTime=True)
+    #set_nodes = cmds.sets(engine_joints, query=True)
+    start_frame = cmds.playbackOptions(query=True, minTime=True)
+    end_frame = cmds.playbackOptions(query=True, maxTime=True)
 
     #log.info("Baking animation curves for joints under %s:" % engine_joints)
 
     #swap to a panel that doesnt render
     model_panel = set_dull_panel()
 
-    mc.bakeResults(transforms,
+    cmds.bakeResults(transforms,
                      #hierarchy = "below",
                      simulation=True,
                      t=(int(start_frame), int(end_frame)),
@@ -53,14 +53,14 @@ def set_dull_panel():
     Can be used to toggle on a limited basis(at least within the same script scope in most cases).
     """
     #Get the visible model panel - assumes only one!
-    visible_panels = mc.getPanel(visiblePanels = True)
+    visible_panels = cmds.getPanel(visiblePanels = True)
     model_panel = None
     if visible_panels:
         for panel in visible_panels:
             if panel.find("modelPanel")!=-1:
                 model_panel = panel
                 #Temporarily change to dope sheet or another "dull" window
-                mc.scriptedPanel('dopeSheetPanel1', rp=model_panel, e=1)
+                cmds.scriptedPanel('dopeSheetPanel1', rp=model_panel, e=1)
     return model_panel
 
 def set_model_panel(model_panel):
@@ -68,7 +68,7 @@ def set_model_panel(model_panel):
     Set the model panel from a scriptedPanel
     """
     if model_panel:
-        mc.modelPanel(model_panel, rp="dopeSheetPanel1", e=1)
+        cmds.modelPanel(model_panel, rp="dopeSheetPanel1", e=1)
 
 def maya_bakeSRT_runCommand_new(transform):
 
@@ -76,15 +76,15 @@ def maya_bakeSRT_runCommand_new(transform):
     Takes transforms and fixes gimbal issues one frame at a time using some conditional math.
     """
 
-    t0 = float(mc.playbackOptions(q=1, ast=1))
-    t1 = float(mc.playbackOptions(q=1, aet=1))
+    t0 = float(cmds.playbackOptions(q=1, ast=1))
+    t1 = float(cmds.playbackOptions(q=1, aet=1))
 
     # get keys - should be same for all channels since we baked them in that range
     k = 0
-    nKeys = int(mc.keyframe(transform + ".rotateX", query=1, keyframeCount=1))
-    rotX = mc.keyframe(transform + ".rotateX", valueChange=1, query=1)
-    rotY = mc.keyframe(transform + ".rotateY", valueChange=1, query=1)
-    rotZ = mc.keyframe(transform + ".rotateZ", valueChange=1, query=1)
+    nKeys = int(cmds.keyframe(transform + ".rotateX", query=1, keyframeCount=1))
+    rotX = cmds.keyframe(transform + ".rotateX", valueChange=1, query=1)
+    rotY = cmds.keyframe(transform + ".rotateY", valueChange=1, query=1)
+    rotZ = cmds.keyframe(transform + ".rotateZ", valueChange=1, query=1)
 
     for k in range(1,nKeys):
         x_diff = 0.0
@@ -124,37 +124,77 @@ def maya_bakeSRT_runCommand_new(transform):
     # set keyframes
     for k in range(0,nKeys):
 
-        mc.keyframe((transform + ".rotateX"),
+        cmds.keyframe((transform + ".rotateX"),
             edit=1, index=(k,k), valueChange=rotX[k])
-        mc.keyframe((transform + ".rotateY"),
+        cmds.keyframe((transform + ".rotateY"),
             edit=1, index=(k,k), valueChange=rotY[k])
-        mc.keyframe((transform + ".rotateZ"),
+        cmds.keyframe((transform + ".rotateZ"),
             edit=1, index=(k,k), valueChange=rotZ[k])
 
-#transforms = mc.ls(sl= True)
+#transforms = cmds.ls(sl= True)
 #bake.bake_transform_animation(transforms)
 
 def remove_flip(joints):
 
-    start_frame = mc.playbackOptions(q=1, min=1)
-    end_frame = mc.playbackOptions(q=1, max=1)+1
+    start_frame = cmds.playbackOptions(q=1, min=1)
+    end_frame = cmds.playbackOptions(q=1, max=1)+1
 
     for i in range(int(start_frame), int(end_frame)):
-        mc.currentTime(i)
+        cmds.currentTime(i)
 
         for joint in joints:
 
             # repo worldSpace
-            rot = mc.xform(joint, q=1, ws=1, ro=1)
-            mc.xform(joint, ws=1, ro=rot)
+            rot = cmds.xform(joint, q=1, ws=1, ro=1)
+            cmds.xform(joint, ws=1, ro=rot)
 
             # repo precsisioio
-            abs_rot = mc.xform(joint, q=1, a=1, ro=1)
+            abs_rot = cmds.xform(joint, q=1, a=1, ro=1)
             abs_rot = [round(v, 3) for v in abs_rot]
-            mc.xform(joint, a=1, ro=abs_rot)
+            cmds.xform(joint, a=1, ro=abs_rot)
 
             # unroll -180
 
-            mc.setKeyframe(joint+'.rx')
-            mc.setKeyframe(joint+'.ry')
-            mc.setKeyframe(joint+'.rz')
+            cmds.setKeyframe(joint+'.rx')
+            cmds.setKeyframe(joint+'.ry')
+            cmds.setKeyframe(joint+'.rz')
+
+
+def prune_static_keys(obj, recursive=False):
+    """
+    For the given object, find all animated channels and if a channel is static
+    (i.e. all key values are the same), remove all keys except the first and last.
+    
+    If 'recursive' is True and the object is a joint, then it processes the joint
+    and all its descendant joints.
+    """
+    # Determine the list of nodes to process:
+    nodes = [obj]
+    if recursive:
+        # This returns all descendant joints, if any.
+        descendants = cmds.listRelatives(obj, ad=True, type="joint") or []
+        nodes.extend(descendants)
+    
+    # Process each node individually.
+    for node in nodes:
+        animAttrs = cmds.listAnimatable(node)
+        if not animAttrs:
+            continue
+
+        for attr in animAttrs:
+            # Retrieve key times and key values for the attribute.
+            keyTimes = cmds.keyframe(attr, query=True, timeChange=True)
+            if not keyTimes:
+                continue
+            keyValues = cmds.keyframe(attr, query=True, valueChange=True)
+            
+            # Check if the attribute is static within a small tolerance.
+            if all(abs(val - keyValues[0]) < 1e-5 for val in keyValues):
+                firstTime = keyTimes[0]
+                lastTime = keyTimes[-1]
+                # Remove intermediate keys.
+                for t in keyTimes:
+                    if t != firstTime and t != lastTime:
+                        cmds.cutKey(attr, time=(t, t), clear=True)
+                print("Optimized static channel:", attr)
+
