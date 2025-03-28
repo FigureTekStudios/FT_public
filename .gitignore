@@ -6,4 +6,9 @@
 
 # Compiled Python bytecode
 *.py[cod]
+# Ignore Python cache directories
+__pycache__/
+
+# Ignore Python compiled bytecode files
+*.pyc
 
