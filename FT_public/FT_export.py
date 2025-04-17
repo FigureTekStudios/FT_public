@@ -489,9 +489,39 @@ def generate_fbx_model(base_fbx_destination_folder=None,
 
 from pathlib import Path
 
-fbx_directory = Path("D:/Projects/Style_Project/TheMission_Project/The-Mission/Assets/Characters/Krill/Spitter/fbx")
-fbx_directory = Path("D:/Projects/Style_Project/TheMission_Project/The-Mission/Assets/Characters/Krill/NewLegDesign/fbx")
+
+current_file = Path(cmds.file(q=1, loc=1))
+current_file.stem
+
+
+
+
+current_file = Path(cmds.file(q=1, loc=1))
+
+character_name = character_name = current_file.stem  # This will be "Grunt"
+character_species = "Human"
+#would be great to automate this.. with something like: __project__, __assets__, __species__ , __working__,  __character_name__
+#current_file.parts
+
+#help(current_file.iterdir())
+
+# Create a Path object representing a directory
+#directory_path = current_file.parent
+
+# Iterate through the directory's contents
+#for entry in directory_path.iterdir():
+#    print(entry)
+
+
+fbx_directory = Path(f"D:/Projects/Style_Project/TheMission_Project/The-Mission/Assets/Characters/{character_species}/{character_name}/fbx")
+
+#fbx_directory = Path("D:/Projects/Style_Project/TheMission_Project/The-Mission/Assets/Characters/Krill/NewLegDesign/fbx")
+#fbx_directory = Path("D:/Projects/Style_Project/TheMission_Project/The-Mission/Assets/Characters/Krill/NewLegDesign/fbx")
+
 #fbx_directory = Path("D:/Projects/Style_Project/TheMission_Project/The-Mission/Assets/Characters/Human/Generic/fbx")
+
+
+
 
 character_name = fbx_directory.parent.name  # This will be "Grunt"
 character_species = fbx_directory.parent.parent.name  # This will be "Krill"
@@ -503,8 +533,10 @@ animations_fbx_destination_folder = fbx_directory / "animations"
 
 
 if character_species == "Human" :
-    delete_these_strings = ["*:toeMetaHydraulic_*_0_jnt", "*:fingerHydraulic_*0_0_jnt", "*:fingerHydraulic_*1_0_jnt", "*:fingerHydraulic_*2_0_jnt", "*:fingerHydraulic_*3_0_jnt", "*:deltoidAim_**_1_jnt", "*:eye_**_eye_jnt", "*:jaw_C0_0_jnt", "*:teethTop_C0_0_jnt", "*:toe_**_0_jnt", "*:AnkleFrontSldMain_**_0_jnt", "*:CraniumSldMain_C0_0_jnt",
-                            "*:breastPlacement_**_0_jnt", "*:SpineC7SldMain_C0_0_jnt", "*:lat_**_0_jnt", "*:buttock_**_0_jnt", "*:prop_**_0_jnt", "*:foot_*_ball1_jnt", "*:gunRevolver_C0_0_jnt"]
+    delete_these_strings = ["*:toeMetaHydraulic_*_0_jnt", "*:fingerHydraulic_*0_0_jnt", "*:fingerHydraulic_*1_0_jnt", "*:fingerHydraulic_*2_0_jnt", "*:fingerHydraulic_*3_0_jnt",
+                             "*:deltoidAim_**_1_jnt", "*:eye_**_eye_jnt", "*:jaw_C0_0_jnt", "*:teethTop_C0_0_jnt", "*:toe_**_0_jnt", "*:AnkleFrontSldMain_**_0_jnt", 
+                             "*:CraniumSldMain_C0_0_jnt","*:breastPlacement_**_0_jnt", "*:SpineC7SldMain_C0_0_jnt", "*:lat_**_0_jnt", "*:buttock_**_0_jnt", 
+                             "*:prop_**_0_jnt", "*:foot_*_ball1_jnt", "*:gunRevolver_C0_0_jnt"]
                             
     #delete_these_strings = ["toeMetaHydraulic_*_0_jnt", "fingerHydraulic_*0_0_jnt","fingerHydraulic_*1_0_jnt", "fingerHydraulic_*2_0_jnt", "fingerHydraulic_*3_0_jnt", "deltoidAim_**_1_jnt", "eye_**_eye_jnt", "jaw_C0_0_jnt", "teethTop_C0_0_jnt", "toe_**_0_jnt", "AnkleFrontSldMain_**_0_jnt", "CraniumSldMain_C0_0_jnt",
     #                        "breastPlacement_**_0_jnt", "SpineC7SldMain_C0_0_jnt", "lat_**_0_jnt", "buttock_**_0_jnt", "prop_**_0_jnt", "foot_*_ball1_jnt"]                            
@@ -512,12 +544,11 @@ if character_species == "Human" :
                             
 
 if character_species == "Krill":
-    delete_these_strings = ["*:leg_*_*Leg01_jnt", "*:leg_*_hipFrontSlider_jnt","*:foot_*_0_jnt"]
+    delete_these_strings = ["*:leg_*_*Leg01_jnt", "*:leg_*_hipFrontSlider_jnt","*:foot_*_0_jnt", "*:arm_*0_*Arm01_jnt"]
 
 cmds.select(cmds.ls(delete_these_strings))
+
 '''
-
-
 fbx_export_path=generate_fbx_model(base_fbx_destination_folder = base_fbx_destination_folder,
                                    save_fbx_to_rig_directory_too = True,
                                    model_container_wo_namespace="export_grp",
@@ -538,7 +569,7 @@ base_dir =
 cmds.select( "AnglerFishRN")
 cmds.select( "Neil_REFRN")
 
-cmds.select( "SeaUrchinRN")
+cmds.select( f"{character_name}RN")
 generate_fbx_animations(animations_fbx_destination_folder = animations_fbx_destination_folder, 
                             model_container_wo_namespace="export_grp", 
                             bypass_selection_export_all=False,
