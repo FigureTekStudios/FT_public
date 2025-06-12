@@ -3,7 +3,7 @@ import maya.mel as mel
 import FT_public.FT_bake as bake
 import FT_public.ml_worldBake as ml_worldBake
 import os
-
+from pathlib import Path
 #import importlib 
 #importlib.reload(ml_worldBake)
 #importlib.reload(bake)
@@ -47,6 +47,58 @@ def get_namespace_from_reference(reference_node):
     namespace = cmds.referenceQuery(reference_node, namespace=True).split(":")[-1]
 
     return namespace
+
+
+
+# ---------------------------------------------------------------
+# maya_to_houdini_fbx_color_fix.py
+#
+# Run in Maya *once* before exporting your characters.
+#   • Select nothing to process all meshes in the scene
+#   • Or select specific meshes / transforms
+#
+# Choose:   MODE = "delete"   # remove vertex colour sets
+#        or MODE = "white"    # set colours to 1,1,1
+# ---------------------------------------------------------------
+import maya.cmds as cmds
+
+MODE = "delete"    # "delete"  or  "white"
+
+def _all_mesh_shapes(nodes):
+    shapes = []
+    for n in nodes:
+        if cmds.nodeType(n) == "mesh":
+            shapes.append(n)
+        else:
+            shapes.extend(cmds.listRelatives(n, ad=True, type="mesh") or [])
+    return list(set(shapes))
+
+def fix_vertex_colors(mode="delete"):
+    sel = cmds.ls(sl=True) or cmds.ls(type="transform")   # whole scene if nothing selected
+    meshes = _all_mesh_shapes(sel)
+
+    for m in meshes:
+        color_sets = cmds.polyColorSet(m, q=True, allColorSets=True) or []
+
+        if mode == "delete":
+            for cs in color_sets:
+                cmds.polyColorSet(m, delete=True, colorSet=cs)
+
+        elif mode == "white":
+            if not color_sets:
+                cmds.polyColorSet(m, create=True, colorSet="colorSet1")
+            # make sure we’re editing the active set
+            cmds.polyColorSet(m, currentColorSet=True, colorSet=color_sets[0] if color_sets else "colorSet1")
+            cmds.polyColorPerVertex(m, rgb=(1,1,1), a=1, cdo=True)  # cdo = current display object on
+
+        else:
+            cmds.error("mode must be 'delete' or 'white'")
+
+    print("Processed {} mesh(es) – mode: {}".format(len(meshes), mode))
+
+# ---------------- run it ----------------
+
+
 
 def create_reference(file_path, namespace=None):
     """
@@ -335,6 +387,7 @@ def generate_fbx_model(base_fbx_destination_folder=None,
                         save_fbx_to_rig_directory_too = False,
                         model_container_wo_namespace="export_grp", 
                         Lo_Mid_Hi = "Hi", 
+                        fix_vertex_colors_flag = True,
                         remove_unused_influences = False,
                         delete_these_strings =[]):
 
@@ -423,8 +476,8 @@ def generate_fbx_model(base_fbx_destination_folder=None,
 
 
     #fbx_export_path =  os.path.join(base_fbx_destination_folder, f"fbx_model/{namespace}_base.fbx")
-    
-    
+    if fix_vertex_colors_flag == True:
+        fix_vertex_colors()
     if remove_unused_influences:
         select_geo_in_group(f"{namespace}:{model_container_wo_namespace}")
         mel.eval('''RemoveUnusedInfluences;''')
@@ -487,7 +540,7 @@ def generate_fbx_model(base_fbx_destination_folder=None,
     return fbx_export_path
 
 
-from pathlib import Path
+
 
 
 current_file = Path(cmds.file(q=1, loc=1))
@@ -498,7 +551,10 @@ current_file.stem
 
 current_file = Path(cmds.file(q=1, loc=1))
 
-character_name = character_name = current_file.stem  # This will be "Grunt"
+character_name ="Generic"  # This will be "Grunt"
+#if str(current_file).endswith("_base.fbx"):
+    #its a char
+
 character_species = "Human"
 #would be great to automate this.. with something like: __project__, __assets__, __species__ , __working__,  __character_name__
 #current_file.parts
@@ -512,8 +568,10 @@ character_species = "Human"
 #for entry in directory_path.iterdir():
 #    print(entry)
 
+fbx_directory = Path(f"D:/Assets/FT_Rigs/Style/{character_species}/{character_name}_work/{character_name}/_rig")
+#fbx_directory = Path(f"D:/Projects/Style_Project/TheMission_Project/The-Mission/Assets/Characters/{character_species}/{character_name}/fbx")
 
-fbx_directory = Path(f"D:/Projects/Style_Project/TheMission_Project/The-Mission/Assets/Characters/{character_species}/{character_name}/fbx")
+#fbx_directory = Path(f"D:/Projects/Style_Project/TheMission_Project/The-Mission/Assets/Characters/{character_species}/{character_name}/fbx")
 
 #fbx_directory = Path("D:/Projects/Style_Project/TheMission_Project/The-Mission/Assets/Characters/Krill/NewLegDesign/fbx")
 #fbx_directory = Path("D:/Projects/Style_Project/TheMission_Project/The-Mission/Assets/Characters/Krill/NewLegDesign/fbx")
@@ -523,13 +581,13 @@ fbx_directory = Path(f"D:/Projects/Style_Project/TheMission_Project/The-Mission/
 
 
 
-character_name = fbx_directory.parent.name  # This will be "Grunt"
-character_species = fbx_directory.parent.parent.name  # This will be "Krill"
+#character_name = fbx_directory.parent.name  # This will be "Grunt"
+character_species = fbx_directory.parent.parent.parent.name  # This will be "Krill"
 print(character_name)
 
 
-base_fbx_destination_folder = fbx_directory / "base"
-animations_fbx_destination_folder = fbx_directory / "animations"
+base_fbx_destination_folder = fbx_directory
+animations_fbx_destination_folder = fbx_directory / "fbx_animations"
 
 
 if character_species == "Human" :
@@ -587,5 +645,8 @@ cmds.FBXExport("-file", fbx_export_path, "-s")
 
 
 generate_fbx_animations(Lo_Mid_Hi = "Lo")
+# Useful functions
+fix_vertex_colors()
+
 
 '''
