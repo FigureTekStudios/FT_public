@@ -266,9 +266,13 @@ def generate_fbx_animation(reference_node,
 
     #export_rig = current_project_path + "_rig/PG4_export.mb" #should do a list to determine what file needs to be pulled 
     #reference_node = "Neil_REFRN"
+    start = int(cmds.playbackOptions(q=True, min=True))
+    end = int(cmds.playbackOptions(q=True, max=True))    
+    
+    
     namespace = get_namespace_from_reference(reference_node)
     if cmds.objExists(f"{namespace}:breathe_C0_0_jnt"):
-        mel.eval(f'''bakeResults -simulation true -t "1:59" -sampleBy 1 -oversamplingRate 1 -disableImplicitControl true -preserveOutsideKeys true -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -removeBakedAnimFromLayer false -bakeOnOverrideLayer false -minimizeRotation true -at "sx" -at "sy" -at "sz" {namespace}:breathe_C0_0_jnt;''')
+        mel.eval(f'''bakeResults -simulation true -t "{start}:{end}" -sampleBy 1 -oversamplingRate 1 -disableImplicitControl true -preserveOutsideKeys true -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -removeBakedAnimFromLayer false -bakeOnOverrideLayer false -minimizeRotation true -at "sx" -at "sy" -at "sz" {namespace}:breathe_C0_0_jnt;''')
     #if cmds.objExists(f"{namespace}:spine_C2_0_jnt"):
     #    mel.eval(f'''bakeResults -simulation true -t "1:59" -sampleBy 1 -oversamplingRate 1 -disableImplicitControl true -preserveOutsideKeys true -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -removeBakedAnimFromLayer false -bakeOnOverrideLayer false -minimizeRotation true -at "sx" -at "sy" -at "sz" {namespace}:spine_C2_0_jnt;''')
     
@@ -318,8 +322,7 @@ def generate_fbx_animation(reference_node,
 
     matrix_nodes = cmds.ls(type = "mgear_matrixConstraint") + cmds.ls(type = "multMatrix") + cmds.ls( "*:*_rigUParCon")
     print(len(matrix_nodes))
-    #matrix_nodes = cmds.ls( "*:*_rigUParCon")
-    #len(matrix_nodes)
+
     #deleting matrix constraints any other matrix in the scene
     for matrix_node in matrix_nodes:
         try:
@@ -335,8 +338,6 @@ def generate_fbx_animation(reference_node,
     children_of_jnt_org = cmds.listRelatives(cmds.listRelatives(global_joint,p=True), c= True)
 
     cmds.parent(model_container,children_of_jnt_org, w =True)
-
-
 
     rig_nodes = cmds.ls(f"{namespace}:rig_*") #the rig and sets should be returned
     for rig_node in rig_nodes :
@@ -372,11 +373,30 @@ def generate_fbx_animation(reference_node,
         os.makedirs(os.path.dirname(fbx_export_path))
     print ("fbx_export_path=", fbx_export_path)
     print ("""cmds.FBXExportBakeComplexAnimation("-v", "true")""")
+    
+
     # Export the fbx file
 
     print ("""cmds.FBXExport("-file", fbx_export_path, "-s")""")
-    # Include animations
-    cmds.FBXExportBakeComplexAnimation("-v", "true")
+    # Get current playback range
+
+    
+    # Set take name using the scene name
+
+    print(scene_name, start, end)
+
+    
+    mel.eval('FBXExportSplitAnimationIntoTakes -c')
+    
+    # Define the take using scene name and frame range
+    mel_command = 'FBXExportSplitAnimationIntoTakes -v "' + scene_name + '" ' + str(start) + ' ' + str(end)
+    mel.eval(mel_command)
+    
+
+    mel.eval(f'FBXExportSplitAnimationIntoTakes -v "{scene_name}" {start} {end}')
+    print("[MEL] " + mel_command)
+
+    #cmds.FBXExportBakeComplexAnimation("-v", "true")
     # Export the fbx file
 
     cmds.FBXExport("-file", fbx_export_path, "-s")
@@ -551,7 +571,7 @@ current_file.stem
 
 current_file = Path(cmds.file(q=1, loc=1))
 
-character_name ="Generic"  # This will be "Grunt"
+character_name ="Sniper"  # This will be "Grunt"
 #if str(current_file).endswith("_base.fbx"):
     #its a char
 
@@ -568,7 +588,10 @@ character_species = "Human"
 #for entry in directory_path.iterdir():
 #    print(entry)
 
-fbx_directory = Path(f"D:/Assets/FT_Rigs/Style/{character_species}/{character_name}_work/{character_name}/_rig")
+#fbx_directory = Path(f"D:/Assets/OUT/FT_Rigs/Game_Jams/Fragments_of_the_Deep/Aria_work/Aria/_rig")
+fbx_directory = Path(f"D:/Assets/OUT/FT_Rigs/Style/Human/Sniper_work/Sniper/_rig/")
+
+D:\Assets\OUT\FT_Rigs\Style\Human\Generic_work\Generic\_rig
 #fbx_directory = Path(f"D:/Projects/Style_Project/TheMission_Project/The-Mission/Assets/Characters/{character_species}/{character_name}/fbx")
 
 #fbx_directory = Path(f"D:/Projects/Style_Project/TheMission_Project/The-Mission/Assets/Characters/{character_species}/{character_name}/fbx")
